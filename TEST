@@ -1,0 +1,489 @@
+---
+title: ISLR Chapter 5 Lab
+date: March 27, 2019
+output: pdf_document
+---
+
+```{r, message=FALSE, warning=FALSE, echo=FALSE}
+require(knitr)
+opts_chunk$set(eval= TRUE, include = TRUE)
+
+require(ISLR)      # Auto, Default and portfolio datasets
+require(tidyverse) # various
+require(broom)     # augment
+require(modelr)    # ???
+require(boot)      # cv.glm()
+```
+
+
+
+
+# 5.3.1 The Validation Set Approach
+
+In this section, we'll explore the use of the validation set approach in order to estimate the
+test error rates that result from fitting various linear models on the `Auto`data set.  We will first convert `Auto` to a tibble to eliminate a row names problems with augment later.
+
+```{r}
+Auto <- as_tibble(Auto)
+```
+
+## Randomness
+
+Before each randomization, we use the `set.seed()`function in order to set a seed for
+`R`'s random number generator, so that you'll obtain precisely the same results as those shown in the textbook. It is generally a good idea to set a random seed when performing an analysis such as cross-validation
+that contains an element of randomness, so that the results obtained can be reproduced precisely at a later time.
+
+## CV with linear model
+
+We begin by using the `sample_n()` and `setdiff()` functions to split the set of observations into two halves. We'll start by selecting a random subset of 196 observations out of the original 392 observations. We refer to these observations as the training
+set.
+
+```{r}
+set.seed(1)
+
+train <- Auto %>%
+  sample_frac(0.5)
+
+test <- Auto %>%
+  setdiff(train)
+```
+
+We then use `lm()`to fit a linear regression using only
+the observations corresponding to the training set.
+
+```{r}
+model_LR <- lm(mpg ~ horsepower, data = train)
+```
+
+We now use the `predict()` function to estimate the response for the test and train sets.  After we gather the predictions for several models, we will compare the results.
+
+```{r}
+test$pred_test_linear <- predict(model_LR, newdata = test)
+
+train$pred_train_linear <- predict(model_LR, newdata = train)
+```
+
+Therefore, the estimated test MSE for the linear regression fit is 26.14, which is bigger than the MSE for the training set, as expected. 
+
+## CV with quadratic model
+
+We
+can use the `poly()`function to estimate the test error for a quadratic model.
+
+```{r}
+model_QUAD <- lm(mpg ~ horsepower + I(horsepower^2) , 
+                 data = train)
+
+test$pred_test_quad <- predict(model_QUAD, newdata = test)
+
+train$pred_train_quad <- predict(model_QUAD, newdata = train)
+
+
+
+```
+
+
+## CV with cubic model
+
+We
+can use the `poly()`function to estimate the test error for the cubic model.
+
+```{r}
+
+model_CUBIC <- lm(mpg ~ horsepower + I(horsepower^2) +
+                                     I(horsepower^3), 
+                  data = train)
+
+test$pred_test_cub <- predict(model_CUBIC, newdata = test)
+
+train$pred_train_cub <- predict(model_CUBIC, newdata = train)
+```
+
+## Comparing the error rates
+
+We see that generally test error rates are higher than train error rates.  We also see that test error rates improve as the degree of the polynomial increases, but the gain from quadratic model to cubic model (19.82 to 19.78) is only about 0.2%.
+
+```{r}
+train_stats <- train %>% 
+  summarize(linear_MSE = mean((mpg -pred_train_linear)^2),
+            quad_MSE = mean((mpg - pred_train_quad)^2),
+            cubic_MSE = mean((mpg - pred_train_cub)^2))
+
+test_stats <- test %>% 
+  summarize(linear_MSE = mean((mpg -pred_test_linear)^2),
+            quad_MSE = mean((mpg - pred_test_quad)^2),
+            cubic_MSE = mean((mpg - pred_test_cub)^2))
+
+gdata::combine(train_stats, test_stats)
+```
+
+## Repeat with a different training set
+
+If we choose a different
+training set instead by using a different random seed, then we will obtain somewhat different errors on the
+validation (test) set. 
+
+```{r}
+set.seed(2)
+
+train <- Auto %>%
+  sample_frac(0.5)
+
+test <- Auto %>%
+  setdiff(train)
+
+model_LR <- lm(mpg ~ horsepower, data = train)
+test$pred_test_linear <- predict(model_LR, newdata = test)
+train$pred_train_linear <- predict(model_LR, newdata = train)
+
+
+model_QUAD <- lm(mpg ~ horsepower + I(horsepower^2) , 
+                 data = train)
+test$pred_test_quad <- predict(model_QUAD, newdata = test)
+train$pred_train_quad <- predict(model_QUAD, newdata = train)
+
+model_CUBIC <- lm(mpg ~ horsepower + I(horsepower^2) +
+                                     I(horsepower^3), 
+                  data = train)
+test$pred_test_cub <- predict(model_CUBIC, newdata = test)
+train$pred_train_cub <- predict(model_CUBIC, newdata = train)
+
+train_stats <- train %>% 
+  summarize(linear_MSE = mean((mpg -pred_train_linear)^2),
+            quad_MSE = mean((mpg - pred_train_quad)^2),
+            cubic_MSE = mean((mpg - pred_train_cub)^2))
+
+test_stats <- test %>% 
+  summarize(linear_MSE = mean((mpg -pred_test_linear)^2),
+            quad_MSE = mean((mpg - pred_test_quad)^2),
+            cubic_MSE = mean((mpg - pred_test_cub)^2))
+
+gdata::combine(train_stats, test_stats)
+```
+
+Using this split of the observations into a training set and a validation
+set, we find that the validation set error rates for the models with linear,
+quadratic, and cubic terms are 23.30, 18.90, and 19.26, respectively.  For this particular sample, the cubic model performs worse than the quadratic model on the test set
+
+These results are consistent with our previous findings: a model that
+predicts `mpg` using a quadratic function of `horsepower` performs better than
+a model that involves only a linear function of `horsepower`, and there is
+little evidence in favor of a model that uses a cubic function of `horsepower`.
+
+## Motivation for using other validation techniques
+
+The validation set method is not robust, and very different results come from different samples.  In this code we generate 1000 different validation sets, and the linear model test MSE varies from 19 to 30.  Also note that the train MSE is, on average, less than the test MSE.
+
+
+```{r}
+
+set.seed(100)
+
+# initialize MSE vector
+
+train_MSEs <- vector()
+test_MSEs <- vector()
+
+for(i in 1:1000) {
+
+  train <- Auto %>% sample_frac(0.5)
+  
+  test <- Auto %>% setdiff(train)
+  
+  model_LR <- lm(mpg ~ horsepower, data = train)
+  train$pred_train_linear <- predict(model_LR)
+  train_MSEs[[i]] = mean((train$mpg - train$pred_train_linear)^2)
+  test$pred_test_linear <- predict(model_LR, newdata = test)
+  test_MSEs[[i]] = mean((test$mpg - test$pred_test_linear)^2)
+}
+
+cols <- c("Train"="#f04546","Test"="#3591d1")
+as_tibble(test_MSEs) %>% 
+  ggplot(aes(x = value, y = ..density.., color = "Test")) +
+  geom_freqpoly(binwidth = 1) + 
+  geom_freqpoly(aes(x = value, y = ..density.., color = "Train"), 
+                data = as_tibble(train_MSEs),
+                binwidth = 1) +
+  xlab("MSE") +
+  labs(title = "Comparison of Test MSE and Train MSE",
+              subtitle = "1000 CV runs, test = 50% of data")
+```
+
+# 5.3.2 Leave-One-Out Cross-Validation
+
+## Using `glm()` to create linear models
+
+The LOOCV estimate can be automatically computed for any generalized
+linear model using the `glm()` and `cv.glm()` functions. In the lab for Chapter 4, we used the `glm()` function to perform logistic regression by passing
+in the `family="binomial"` argument. But if we use `glm()` to fit a model
+*without passing in the family argument*, then it performs linear regression,
+just like the `lm()` function. The following should yield identical models.
+
+```{r}
+model_GLR <- glm(mpg~horsepower, data=Auto)
+coef(model_GLR)
+
+model_LR <- lm(mpg~horsepower, data=Auto)
+coef(model_LR)
+```
+
+## LOOCV with `cv.glm()`
+
+In this lab, we will perform linear
+regression using the `glm()` function rather than the `lm()` function because
+the latter can be used together with `cv.glm()` to perform cross-validation. The `cv.glm()` function is part of the `boot` library.
+
+The `cv.glm()` function will also be used for $k$-fold cross validation later in this file.
+
+```{r}
+
+model_GLR <- glm(mpg~horsepower, data = Auto)
+
+LOOCV_error <- cv.glm(Auto, model_GLR)
+
+LOOCV_error$delta
+```
+
+The `cv.glm()` function produces a list with several components. The two
+numbers in the delta vector contain the cross-validation results. In this case the numbers are identical (up to two decimal places) and correspond
+to the LOOCV statistic: our cross-validation estimate for the *test
+MSE* is approximately 24.23. Below, we'll discuss a situation in
+which the two numbers differ. 
+
+## Using LOOCV to compare models
+
+We can repeat this procedure for increasingly complex polynomial fits.
+To automate the process, we use the `for()` function to initiate a for loop
+which iteratively fits polynomial regressions for polynomials of order 
+`i = 1` to `i = 5` and computes the associated cross-validation error. 
+
+This command may take a couple of minutes to run.
+
+```{r}
+
+models <- c(mpg ~ horsepower,
+            mpg ~ horsepower + I(horsepower^2) ,
+            mpg ~ horsepower + I(horsepower^2) + I(horsepower^3) ,
+            mpg ~ horsepower + I(horsepower^2) + I(horsepower^3) + 
+              I(horsepower^4),
+            mpg ~ horsepower + I(horsepower^2) + I(horsepower^3) + 
+              I(horsepower^4) + I(horsepower^5)
+            )
+
+LOOCV_errors <- data.frame(power = numeric(),
+                     delta1 = numeric(), 
+                     delta2 = numeric())
+for (i in 1:length(models)){
+ model_GLR <- glm(models[[i]], data=Auto)
+ LOOCV_errors[i,2:3] <- cv.glm(Auto, model_GLR)$delta
+ LOOCV_errors[i, 1] <- i
+}
+LOOCV_errors
+
+LOOCV_errors %>% 
+  ggplot(aes(x = power)  ) +
+  geom_line(aes(y = delta1)) +
+  geom_point(aes(y = delta1)) +
+  xlab("Power") +
+  labs(title = "Estimated test MSE from LOOCV")
+  
+  
+```
+
+Here we see a sharp drop in the estimated test MSE between
+the linear and quadratic fits, but then no clear improvement from using
+higher-order polynomials.
+
+# 5.3.3 k-Fold Cross-Validation
+
+The `cv.glm()` function can also be used to implement `k`-fold CV. Below we
+use `k = 10`, a common choice for `k`, on the `Auto` data set. We need to set
+a random seed, because the partition of the data is done randomly.
+
+The output from `cv.glm()` is of the same form for LOOCV and K-fold CV, but this time the deltas are not the same (although they are very close). 	
+The first delta is the raw cross-validation estimate of MSE. The second component is the adjusted cross-validation MSE The adjustment is designed to compensate for the bias introduced by not using LOOCV.
+
+```{r}
+set.seed(1)
+model_GLR <- glm(mpg ~ horsepower, data = Auto)
+
+K_fold_error <- cv.glm(Auto, model_GLR, K = 10)
+
+K_fold_error$delta
+```
+
+## Using K-fold CV to compare models.
+
+We initialize a vector in which we will store the CV errors
+corresponding to the polynomial fits of orders 1 to 5.
+
+```{r}
+set.seed(1)
+K_fold_errors <- data.frame(power = numeric(),
+                     delta1 = numeric(), 
+                     delta2 = numeric())
+
+for (i in 1:length(models)){
+  model_GLR <- glm(models[[i]], data=Auto)
+  K_fold_errors[i, 2:3] <- cv.glm(Auto, model_GLR, K = 10)$delta
+  K_fold_errors[i, 1] <- i
+}
+
+K_fold_errors
+
+K_fold_errors %>% 
+  ggplot(aes(x = power)  ) +
+  geom_line(aes(y = delta1)) +
+  geom_point(aes(y = delta1)) +
+  xlab("Power") +
+  labs(title = "Estimated test MSE from 10-fold CV")
+  
+```
+
+We still see little evidence that using
+cubic or higher-order polynomial terms leads to lower test error than simply
+using a quadratic fit.
+
+Notice that the computation time is **much** shorter than that of LOOCV.
+(In principle, the computation time for LOOCV for a least squares linear
+model should be faster than for `k`-fold CV, due to the availability of the
+formula (5.2) for LOOCV; unfortunately the `cv.glm()` function
+does not make use of this formula.) 
+
+We saw in Section 5.3.2 that the two numbers associated with delta are
+essentially the same when LOOCV is performed. When we instead perform
+`k`-fold CV, then the two numbers associated with delta differ slightly. The first is the standard `k`-fold CV estimate, as in (5.3). The second is a bias-corrected
+version. On this data set, the two estimates are very similar to
+each other.
+
+##  Example: CV with a logistic model
+
+### Cross validation set
+
+Now that you're armed with more useful technique for resampling your data, let's try fitting a logistic model for the `Default` dataset to predict whether someone will default on their credit card account or not.
+
+```{r}
+Default <- as_tibble(Default)
+str(Default)
+summary(Default)
+```
+
+First we'll try just holding out a random 20% of the data.
+
+```{r}
+
+accuracy <- vector()
+
+for (i in 1:100) {
+
+    set.seed(i)  # a different seed for each partition
+
+    train <- Default %>%
+      sample_frac(0.2)
+
+    test <- Default %>%
+      setdiff(train)
+
+    # Fit a logistic regression to predict default using balance
+    model_LOGISTIC <- 
+      glm(default ~ balance + student, 
+          data = train, 
+          family = binomial)
+
+    # Use the model to predict the response on the test data
+    glm_probs <- 
+      data.frame(probs = predict(model_LOGISTIC,
+                                 newdata=test,
+                                 type="response"))
+
+    # Confusion matrix
+    glm_pred <- glm_probs %>%
+      mutate(pred = ifelse(probs > 0.5, "Yes", "No"))
+
+    glm_pred <- cbind(test, glm_pred)
+
+    accuracy[[i]] <- 
+      mean(glm_pred$pred == glm_pred$default)
+    
+}
+
+ggplot(data = as_tibble(accuracy)) +
+  geom_histogram(aes(x = value), bins = 10) +
+  xlab("accuracy rate") +
+  labs(title = "Accuracy rates",
+              subtitle = "100 CV runs, test = 20% of data")
+```
+
+Our accuracy is really high on this data, but we're getting different error rates depending on how we choose our test set. That's no good!
+
+### K-fold cross validation
+
+Unfortunately this dataset is too big for us to run LOOCV, so we'll have to settle for `k`-fold. In the space below, build a logistic model on the full `Default` dataset and then run 5-fold cross-validation to get a more accurate estimate of your the accuracy rate.
+
+```{r}
+set.seed(1)
+glm_linear <- glm(default ~ balance + student, 
+                  data = Default,
+                 family = "binomial")
+cv_line <- cv.glm(Default, glm_linear, K = 5)
+
+1- (cv_line$delta)
+
+model_GLR <- glm(mpg~horsepower, data = Auto)
+
+LOOCV_error <- cv.glm(Auto, model_GLR)
+
+LOOCV_error$delta
+```
+
+The `cv.glm()` function produces a list with several components. The two
+numbers in the delta vector contain the cross-validation results. In this case the numbers are identical (up to two decimal places) and correspond
+to the LOOCV statistic: our cross-validation estimate for the *test
+MSE* is approximately 24.23. Below, we'll discuss a situation in
+which the two numbers differ. 
+
+## Using LOOCV to compare models
+
+We can repeat this procedure for increasingly complex polynomial fits.
+To automate the process, we use the `for()` function to initiate a for loop
+which iteratively fits polynomial regressions for polynomials of order 
+`i = 1` to `i = 5` and computes the associated cross-validation error. 
+
+This command may take a couple of minutes to run.
+
+```{r}
+set.seed(1)
+models <- c(default~ student + balance ,
+            default ~ student + I(balance^2),
+            default ~ student * balance,
+            default ~ student:balance)
+
+LOOCV_errors <- data.frame(model = numeric(),
+                     delta1 = numeric(), 
+                     delta2 = numeric())
+
+for (i in 1:length(models)){
+ set.seed(1)  
+ model_Glogit <- glm(models[[i]], data=Default, family = "binomial")
+ LOOCV_errors[i,2:3] <- cv.glm(Default, model_Glogit, K = 5)$delta
+ LOOCV_errors[i, 1] <- i
+}
+LOOCV_errors
+
+LOOCV_errors %>% 
+  ggplot(aes(x = model)  ) +
+  geom_line(aes(y = 1- delta2)) +
+  geom_point(aes(y = 1- delta2)) +
+  xlab("Model Number") +
+  ylab("Accuracy Rate") +
+  labs(title = "Estimated test accuracy from LOOCV")
+
+```
+
+
+# Acknowledgements
+
+This lab on Cross-Validation and Bootstrap in R comes from p. 190-197 of "Introduction to Statistical Learning with
+Applications in R" by Gareth James, Daniela Witten, Trevor Hastie and Robert Tibshirani. 
+It was re-implemented in Fall 2016 in `tidyverse` format by Amelia McNamara and 
+R. Jordan Crouser at Smith College.  It has been changed significantly by M. E. Waggoner of Simpson College in March 2019.
