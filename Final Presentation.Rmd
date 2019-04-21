@@ -1,0 +1,125 @@
+---
+title: "MUDAC 2019: Minnesota Water Quality"
+author: "Genevieve Block, Ben Christensen, Sara Lawson, Delia Matos"
+date: "April 23, 2019"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+require(readxl)
+require(knitr)
+require(png)
+
+```
+
+## Outline
+
+
+## Problem 1
+
+- The question
+
+- Data source
+
+- Data size
+
+- Goal: prediction v inference; regression v clsasification
+
+## The Data
+
+- types of variables
+
+- ranges
+
+- etc.
+
+## Results
+
+- Final model
+
+- Interpretations
+
+- Conclusions (what specific policy should Minnesota look at implementing?)
+
+
+## Data Cleaning
+
+
+
+## Data Exploration
+
+
+## Cross-Validation
+
+
+## Variable Selection
+
+
+## Model Analysis
+
+- What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
+
+
+## Summary
+
+ - Tell the story again
+ 
+ 
+
+## Problem 2
+
+- The question
+
+- Data source
+
+- Data size
+
+- Goal: prediction v inference; regression v clsasification
+
+## The Data
+
+- types of variables
+
+- ranges
+
+- etc.
+
+## Results
+
+- Final model
+
+- Interpretations
+
+- Conclusions (what specific policy should Minnesota look at implementing?)
+
+
+## Data Cleaning
+
+
+
+## Data Exploration
+
+
+
+## Variable Selection
+
+
+
+## Model Analysis
+
+- What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
+
+- We'll use lm(Index ~ TSS... to do this
+
+
+## Summary
+
+ - Tell the story again
+ 
+ - Drive home how it ties into the overarching project
+ 
+
+
+# MUDAC 2019: Minnesota Water Quality 
