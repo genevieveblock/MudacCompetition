@@ -46,9 +46,20 @@ require(png)
 
 ## Data Cleaning
 
+- Renaming variables 
+
 
 
 ## Data Exploration
+- ggcorr plot the correlations between all the variables 
+- ggpairs to show the different distributions of the variables 
+
+```{r Data Exploration}
+ggcorr(DataNew, palette = "RdBu", label = TRUE)
+
+ggpairs(DataNew)
+
+```
 
 
 ## Cross-Validation
@@ -56,7 +67,29 @@ require(png)
 
 ## Variable Selection
 
+```{r}
 
+BestNitrate <- regsubsets(Nitrate ~ ., DataNew, nvmax = 18)
+
+summary(BestNitrate)
+BestSumNitrate <- summary(BestNitrate)
+```
+
+```{r}
+BestTSS <- regsubsets(`Total Suspended Solid (TSS)` ~ ., DataNew, nvmax = 18)
+
+summary(BestTSS)
+BestSumTSS <- summary(BestTSS)
+```
+```{r}
+plot(BestSumNitrate$adjr2)
+plot(BestSumTSS$adjr2)
+```
+
+```{r}
+coef(BestNitrate, 10)
+coef(BestTSS, 10)
+```
 ## Model Analysis
 
 - What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
