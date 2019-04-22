@@ -70,21 +70,36 @@ require(png)
 
 ## Problem 2
 
-- The question
+- What is the effect of rainfall intensity on water quality?
 
-- Data source
+        - Create Annual Precipitation Intensity Index
+        - Measure correlation between index and TSS, Nitrate
 
-- Data size
+- Minnesota Pollution Control Agency; Water Resource Center at Minnesota State University Mankato
 
-- Goal: prediction v inference; regression v clsasification
+- 2,875,000 rows of hourly precipitation data
+
+        - 56 precipitation zones
+        - 4 watersheds
+        - 8 years
+
+- Unsupervised; inference; regression (quantitative variables)
+
 
 ## The Data
 
-- types of variables
+- Location (data type)
 
-- ranges
+- Timestamp (data type)
 
-- etc.
+- Intensity (data type)
+
+- Various year ranges 
+
+        - 2007 - 2012
+        - 2010 - 2014
+        - 2009 - 2014
+
 
 ## Results
 
@@ -97,21 +112,44 @@ require(png)
 
 ## Data Cleaning
 
+- Convert to flat format in Excel
+
+- Add columns 
+        
+        - rain/snow/spring (character)
+        - Datetime (numeric)
+
+- rbind to create one dataset
 
 
 ## Data Exploration
 
+- intensity ranges
+
+- outliers
+
+- bins to view distribution of intensities 
 
 
 ## Variable Selection
 
+- Heuristic from Problem Statement
+
+- What information can we get out of the data? What variables can we create for the index?
+
+- Which index variables contribute more?
+
+- APII = .5 * (Hourly Rainfall Points) + .5 * (Maximum Points)
 
 
 ## Model Analysis
 
-- What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
-
 - We'll use lm(Index ~ TSS... to do this
+
+        - for each watershed and over all years
+        - Emphasize R^2
+
+- Show graphs
 
 
 ## Summary
