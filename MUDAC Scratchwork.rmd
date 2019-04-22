@@ -1,0 +1,106 @@
+---
+title: "Problem 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(sqldf)
+require(tidyverse)
+require(readxl)
+```
+
+```{r}
+LSueur <- read_csv("les.csv")[1:6]
+Root <- read_csv("root.csv")
+Otter <- read_csv("otter.csv")
+StLou <- read_csv("stlou.csv")[1:6]
+LinMod <- read_csv("Linear Model Data.csv")
+names(LSueur)[2]<-"Rain/Snow"
+names(Root)[3]<-"Timestamp"
+names(LSueur)[2] <- "Rain"
+names(Root)[2] <- "Rain"
+names(Otter)[2] <- "Rain"
+names(StLou)[2] <- "Rain"
+```
+
+```{r}
+LSueur %>%  
+  mutate(watershed = "LS") -> LSueur
+Root %>%  
+  mutate(watershed = "R") -> Root
+Otter %>%  
+  mutate(watershed = "O") -> Otter
+StLou %>%  
+  mutate(watershed = "St") -> StLou
+```
+
+
+```{r}
+alldata <- rbind(LSueur, Root, Otter, StLou)
+```
+
+```{r}
+allDataNoZeroes <- alldata %>% filter(Intensity > 0) %>% filter(Rain != "Snow")
+rootDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "R") %>% filter(Rain != "Snow")
+otterDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "O") %>% filter(Rain != "Snow")
+stLouDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "St") %>% filter(Rain != "Snow")
+lSueurDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "LS") %>% filter(Rain != "Snow")
+```
+
+
+TSS
+
+
+```{r}
+APII_TSS_LS <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Le Sueur") )
+
+summary(APII_TSS_LS)
+```
+
+```{r}
+APII_TSS_Otter <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Otter Tail") )
+
+summary(APII_TSS_Otter)
+```
+
+```{r}
+APII_TSS_Root <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Root") )
+
+summary(APII_TSS_Root)
+```
+
+```{r}
+APII_TSS_SL <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "St. Louis") )
+
+summary(APII_TSS_SL)
+```
+
+
+
+NITRATES
+
+
+```{r}
+APII_Nitrate_LS <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Le Sueur"))
+
+summary(APII_Nitrate_LS)
+```
+
+```{r}
+APII_Nitrate_Otter <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Otter Tail") )
+
+summary(APII_Nitrate_Otter)
+```
+
+```{r}
+APII_Nitrate_Root <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Root") )
+
+summary(APII_Nitrate_Root)
+```
+
+```{r}
+APII_Nitrate_SL <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "St. Louis") )
+
+summary(APII_Nitrate_SL)
+```
