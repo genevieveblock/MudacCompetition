@@ -1,0 +1,121 @@
+---
+title: "Problem 2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(sqldf)
+require(tidyverse)
+require(readxl)
+```
+
+```{r}
+LSueur <- read_csv("les.csv")[1:6]
+Root <- read_csv("root.csv")
+Otter <- read_csv("otter.csv")
+StLou <- read_csv("stlou.csv")[1:6]
+names(LSueur)[2]<-"Rain/Snow"
+names(Root)[3]<-"Timestamp"
+names(LSueur)[2] <- "Rain"
+names(Root)[2] <- "Rain"
+names(Otter)[2] <- "Rain"
+names(StLou)[2] <- "Rain"
+
+
+```
+
+```{r}
+LSueur %>%  
+  mutate(watershed = "LS") -> LSueur
+
+Root %>%  
+  mutate(watershed = "R") -> Root
+
+Otter %>%  
+  mutate(watershed = "O") -> Otter
+
+StLou %>%  
+  mutate(watershed = "St") -> StLou
+
+```
+
+
+```{r}
+alldata <- rbind(LSueur, Root, Otter, StLou)
+```
+
+```{r}
+allDataNoZeroes <- alldata %>% filter(Intensity > 0) %>% filter(Rain != "Snow")
+
+rootDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "R") %>% filter(Rain != "Snow")
+
+otterDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "O") %>% filter(Rain != "Snow")
+
+stLouDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "St") %>% filter(Rain != "Snow")
+
+lSueurDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "LS") %>% filter(Rain != "Snow")
+
+```
+
+```{r}
+sum(lSueurDataNoZeroes$Intensity >= 0.25)
+sum(rootDataNoZeroes$Intensity >= 0.25)
+sum(otterDataNoZeroes$Intensity >= 0.25)
+sum(stLouDataNoZeroes$Intensity >= 0.25)
+
+mode(lSueurDataNoZeroes$Intensity)
+mode(rootDataNoZeroes$Intensity)
+mode(otterDataNoZeroes$Intensity)
+mode(stLouDataNoZeroes$Intensity)
+```
+```{r}
+year = 2009
+season = "Spring"
+dat = otterDataNoZeroes
+
+AA <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity <= .1)
+
+AB <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity > .1) %>% filter(Intensity <= .15)
+
+AC <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity > .15) %>% filter(Intensity <= .2)
+
+AD <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity > .2) %>% filter(Intensity <= .25)
+
+AE <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity > .25) %>% filter(Intensity <= .5)
+
+AF <- dat %>% filter(Rain == season) %>%  filter(Year == year) %>% filter(Intensity > .5)
+```
+
+
+
+```{r}
+sqldf("
+      SELECT DISTINCT CAST(FLOOR(numberTime) AS Decimal(2,1)) AS NumberTime
+      FROM allDataNoZeroes
+      WHERE Year = 2009 AND Rain = 'Rain'
+      ORDER BY NumberTime")
+```
+
+```{r}
+sqldf("
+      SELECT DISTINCT CAST(FLOOR(numberTime) AS Decimal(2,1)) AS NumberTime, location, watershed
+      FROM allDataNoZeroes
+      WHERE (Intensity < 50 AND watershed = 'O' AND YEAR = 2014 AND Rain = 'Rain')
+      GROUP BY numberTime, Location 
+      ORDER BY numberTime")
+```
+
+
+```{r}
+sqldf("
+      SELECT timeStamp, location, Intensity
+      FROM allDataNoZeroes
+      WHERE (.15 < Intensity AND Intensity < .2 AND watershed = 'O' AND YEAR = 2014 AND Rain = 'Rain')
+      ORDER BY timeStamp, location
+      ")
+  
+```
+
+
+
