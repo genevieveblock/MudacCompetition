@@ -12,6 +12,11 @@ require(readxl)
 require(knitr)
 require(png)
 require(GGally)
+library(MASS)
+library(tibble)
+library(leaps)
+library(gdata)
+library(caret)
 ```
 
 
