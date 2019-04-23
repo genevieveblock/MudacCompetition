@@ -21,37 +21,73 @@ require(png)
 
 - The question
 
+Problem: find the characteristics of watersheds that effect the river water quality of Minnesota.  
+Insert: Photo of watershed map 
+
 - Data source
+MUDAC?
 
 - Data size
+50 observations with 19 variables 
 
-- Goal: prediction v inference; regression v clsasification
+- Goal: prediction v inference; regression v classification
+regression vs. classification
 
 ## The Data
 
-- types of variables
+Dependent variables:
+ - Nitrate
+ - Total Suspended Solid (TSS)
 
-- ranges
-
-- etc.
+Independent variables:
+ - Forest
+ - Grass and Hay
+ - Wetlands
+ - Cropland
+ - Developed/Urban
+ - Altered Streams
+ - Tile-drained land
+ - Shallow Bedrock under cropland
+ - Sand
+ - Silt
+ - Clay
+ - Organic Matter
+ - Land Slope
+ - Lakes
+ - Lake interception
+ - Latitude
+ - Longitude 
 
 ## Results
 
-- Final model
+From our model we found that Nitrate and TSS levels are influenced by:
+ - Altered Streams (Nitrate & TSS)
+ - Tile-drained land (Nitrate & TSS)
+ - Shallow Bedrock under cropland (Nitrate & TSS)
+ - Silt (Nitrate & TSS)
+ - Latitude (Nitrate & TSS)
+ - Cropland (TSS)
+ - Sand (TSS)
+ - Clay (TSS)
+ - Lake interception (TSS)
+ - Nitrate (TSS)
+ 
+Conclusions 
 
-- Interpretations
-
-- Conclusions (what specific policy should Minnesota look at implementing?)
+From our analysis, we believe that the state of Minnesota should:
+ - Create more policy for agricultural tile drainage
+ - Filter agricultural runoff with constructed and restored wetlands
 
 
 ## Data Cleaning
 
-- Renaming variables 
+- Renaming variables
+- Didn't have to change variable types 
 
 
 
 ## Data Exploration
-- ggcorr plot the correlations between all the variables 
+- ggcorr plotto see the correlations between all the variables 
 - ggpairs to show the different distributions of the variables 
 
 ```{r Data Exploration}
@@ -97,10 +133,18 @@ coef(BestTSS, 10)
 
 ## Summary
 
- - Tell the story again
- 
- 
+Our process:
+- Load data
+- Explore data
+- Subset 
+- Cross Validation 
+- Regressions
+- Reidual sqaured error 
 
+Conclusion: 
+- The State of Minnesota should monitor their farming waste policies and create wetlands to counteract the agricultural run-off.
+ 
+ 
 ## Problem 2
 
 - What is the effect of rainfall intensity on water quality?
