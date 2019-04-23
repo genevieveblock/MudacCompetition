@@ -79,6 +79,11 @@ img <- readPNG("All_watersheds.PNG")
 regression vs. classification
 
 ## The Data
+```{r}
+dataset1 <- "MUDAC_data_Problem1.xlsx"
+data <- read_excel("data.xlsx", skip = 1)
+dplyr::select(data, - `Watershed/Monitoring Site Location`) -> DataNew
+```
 
 Dependent variables:
  - Nitrate
@@ -142,7 +147,8 @@ ggpairs(DataNew)
 
 
 ## Cross-Validation
-
+- After using glm.cv cross validation we found out whether the variables were linear, cubic, or quadratic
+- We were able to choose which type of model by comparing the MSE's of the variables given by the glm.cv
 
 ## Variable Selection
 
@@ -168,7 +174,9 @@ coef(BestTSS, 10)
 ```
 ## Model Analysis
 
-- What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
+- After analyzing the residual standard errors for both the Nitrate and TSS predictive equations, we had:
+  Nitrate:0.3702247
+  TSS: 0.5128203
 
 
 ## Summary
