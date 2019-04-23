@@ -81,7 +81,10 @@ img <- readPNG("All_watersheds.PNG")
 50 observations with 19 variables 
 
 - Goal: prediction v inference; regression v classification
-regression vs. classification
+
+Predict Minnesota river water quality based off of certain variables
+ 
+This problem is a regression problem because we are predicting the value of Nitrate and TSS
 
 ## The Data
 ```{r}
