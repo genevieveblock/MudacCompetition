@@ -1,0 +1,327 @@
+---
+title: "MUDAC 2019: Minnesota Water Quality"
+author: "Genevieve Block, Ben Christensen, Sara Lawson, Delia Matos"
+date: "April 23, 2019"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(tidyverse)
+require(readxl)
+require(knitr)
+require(png)
+require(GGally)
+```
+
+
+```{r, echo = FALSE}
+LSueur <- read_csv("les.csv")[1:6]
+Root <- read_csv("root.csv")
+Otter <- read_csv("otter.csv")
+StLou <- read_csv("stlou.csv")[1:6]
+LinMod <- read_csv("Linear Model Data.csv")
+names(LSueur)[2]<-"Rain/Snow"
+names(Root)[3]<-"Timestamp"
+names(LSueur)[2] <- "Rain"
+names(Root)[2] <- "Rain"
+names(Otter)[2] <- "Rain"
+names(StLou)[2] <- "Rain"
+```
+
+```{r, echo = FALSE}
+LSueur %>%  
+  mutate(watershed = "LS") -> LSueur
+Root %>%  
+  mutate(watershed = "R") -> Root
+Otter %>%  
+  mutate(watershed = "O") -> Otter
+StLou %>%  
+  mutate(watershed = "St") -> StLou
+```
+
+
+```{r, echo = FALSE}
+alldata <- rbind(LSueur, Root, Otter, StLou)
+```
+
+```{r, echo = FALSE}
+allDataNoZeroes <- alldata %>% filter(Intensity > 0) %>% filter(Rain != "Snow")
+rootDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "R") %>% filter(Rain != "Snow")
+otterDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "O") %>% filter(Rain != "Snow")
+stLouDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "St") %>% filter(Rain != "Snow")
+lSueurDataNoZeroes <- allDataNoZeroes %>% filter(watershed == "LS") %>% filter(Rain != "Snow")
+```
+
+
+## Outline
+
+
+## Problem 1
+
+- The question
+
+Problem: find the characteristics of watersheds that effect the river water quality of Minnesota.  
+
+```{r fig.width=1.5, fig.height=1.5,echo=FALSE}
+library(png)
+library(grid)
+img <- readPNG("All_watersheds.PNG")
+ grid.raster(img)
+```
+
+- Minnesota Pollution Control Agency; Water Resource Center at Minnesota State University Mankato
+
+- Data size
+50 observations with 19 variables 
+
+- Goal: prediction v inference; regression v classification
+regression vs. classification
+
+## The Data
+
+Dependent variables:
+ - Nitrate
+ - Total Suspended Solid (TSS)
+
+Independent variables:
+ - Forest
+ - Grass and Hay
+ - Wetlands
+ - Cropland
+ - Developed/Urban
+ - Altered Streams
+ - Tile-drained land
+ - Shallow Bedrock under cropland
+ - Sand
+ - Silt
+ - Clay
+ - Organic Matter
+ - Land Slope
+ - Lakes
+ - Lake interception
+ - Latitude
+ - Longitude 
+
+## Results
+
+From our model we found that Nitrate and TSS levels are influenced by:
+ - Altered Streams (Nitrate & TSS)
+ - Tile-drained land (Nitrate & TSS)
+ - Shallow Bedrock under cropland (Nitrate & TSS)
+ - Silt (Nitrate & TSS)
+ - Latitude (Nitrate & TSS)
+ - Cropland (TSS)
+ - Sand (TSS)
+ - Clay (TSS)
+ - Lake interception (TSS)
+ - Nitrate (TSS)
+ 
+Conclusions 
+
+From our analysis, we believe that the state of Minnesota should:
+ - Create more policy for agricultural tile drainage
+ - Filter agricultural runoff with constructed and restored wetlands
+
+
+## Data Cleaning
+
+- Renaming variables
+- Didn't have to change variable types 
+
+
+
+## Data Exploration
+- ggcorr plotto see the correlations between all the variables 
+- ggpairs to show the different distributions of the variables 
+
+```{r Data Exploration}
+ggcorr(DataNew, palette = "RdBu", label = TRUE)
+ggpairs(DataNew)
+```
+
+
+## Cross-Validation
+
+
+## Variable Selection
+
+```{r}
+BestNitrate <- regsubsets(Nitrate ~ ., DataNew, nvmax = 18)
+summary(BestNitrate)
+BestSumNitrate <- summary(BestNitrate)
+```
+
+```{r}
+BestTSS <- regsubsets(`Total Suspended Solid (TSS)` ~ ., DataNew, nvmax = 18)
+summary(BestTSS)
+BestSumTSS <- summary(BestTSS)
+```
+```{r}
+plot(BestSumNitrate$adjr2)
+plot(BestSumTSS$adjr2)
+```
+
+```{r}
+coef(BestNitrate, 10)
+coef(BestTSS, 10)
+```
+## Model Analysis
+
+- What do the statistics and visualizations tell you about the strength, efficacy, accuracy of your model?
+
+
+## Summary
+
+Our process:
+- Load data
+- Explore data
+- Subset 
+- Cross Validation 
+- Regressions
+- Reidual sqaured error 
+
+Conclusion: 
+- The State of Minnesota should monitor their farming waste policies and create wetlands to counteract the agricultural run-off.
+ 
+ 
+## Problem 2
+
+- What is the effect of rainfall intensity on water quality?
+
+        - Create Annual Precipitation Intensity Index
+        - Measure correlation between index and TSS, Nitrate
+
+- Minnesota Pollution Control Agency; Water Resource Center at Minnesota State University Mankato
+
+- 2,875,000 rows of hourly precipitation data
+
+        - 56 precipitation zones
+        - 4 watersheds
+        - 8 years
+
+- Unsupervised; inference; regression (quantitative variables)
+
+## Watershed Map
+
+
+```{r fig.width=4.5, fig.height=4.5,echo=FALSE}
+library(png)
+library(grid)
+img <- readPNG("4_watersheds.PNG")
+ grid.raster(img)
+```
+
+
+## The Data
+
+- Location (data type)
+
+- Timestamp (data type)
+
+- Intensity (data type)
+
+- Various year ranges 
+
+        - 2007 - 2012
+        - 2010 - 2014
+        - 2009 - 2014
+
+
+## Results
+
+- Rainfall intensity does influence TSS
+
+- Rainfall intensity does not influence Nitrates
+
+- Our index is a reasonable metric of TSS
+
+
+## Data Cleaning
+
+- Convert to flat format in Excel
+
+- Add columns 
+        
+        - rain/snow/spring (character)
+        - Datetime (numeric)
+
+- rbind to create one dataset
+
+
+## Data Exploration
+
+- intensity ranges
+
+- outliers
+
+- bins to view distribution of intensities 
+
+- INSERT GRAPHIC OF BINS OR R CODE
+
+
+## Variable Selection
+
+- Heuristic from Problem Statement
+
+- What information can we get out of the data? What variables can we create for the index?
+
+- Which index variables contribute more?
+
+- APII = .5 * (Hourly Rainfall Points) + .5 * (Maximum Points)
+
+
+## Model Analysis
+
+- We'll use lm(Index ~ TSS... to do this
+
+        - for each watershed and over all years
+        - Emphasize R^2
+
+- Show graphs
+
+
+```{r, echo = FALSE}
+APII_TSS_LS <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Le Sueur") )
+
+summary(APII_TSS_LS)
+
+APII_TSS_Otter <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Otter Tail") )
+
+summary(APII_TSS_Otter)
+
+APII_TSS_Root <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "Root") )
+
+summary(APII_TSS_Root)
+
+APII_TSS_SL <- lm(Index ~ TSS, data=subset(LinMod, Watershed == "St. Louis") )
+
+summary(APII_TSS_SL)
+
+APII_Nitrate_LS <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Le Sueur"))
+
+summary(APII_Nitrate_LS)
+
+APII_Nitrate_Otter <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Otter Tail") )
+
+summary(APII_Nitrate_Otter)
+
+APII_Nitrate_Root <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "Root") )
+
+summary(APII_Nitrate_Root)
+
+APII_Nitrate_SL <- lm(Index ~ Nitrate, data=subset(LinMod, Watershed == "St. Louis") )
+
+summary(APII_Nitrate_SL)
+```
+
+
+## Summary
+
+ - Rainfall intensity can be measured with some success using total amount of rainfall over period (weighted by time of year) and outliers
+ 
+ - A strong APII could be used as another predictor in Problem 1
+ 
+
+
+# MUDAC 2019: Minnesota Water Quality 
